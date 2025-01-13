@@ -1,0 +1,1 @@
+import{r as s,j as e}from"./index-CJ-wuhK9.js";import"./firebase-bUI-1MSG.js";function p(){const[l,t]=s.useState(null),[r,n]=s.useState(0);return e.jsxs("div",{children:[e.jsx("input",{type:"file",onChange:o=>t(o.target.files[0])}),e.jsx("button",{onClick:handleUpload,children:"Upload"}),e.jsxs("p",{children:["Upload Progress: ",r,"%"]})]})}export{p as default};

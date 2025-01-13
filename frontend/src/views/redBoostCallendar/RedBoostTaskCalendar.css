@@ -1,0 +1,94 @@
+.calendar-container {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.event-content {
+  font-size: 0.85em;
+  padding: 2px 4px;
+}
+
+.fc-event {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fc-event:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.fc-toolbar-title {
+  font-size: 1.5em !important;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .fc-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fc-toolbar-title {
+    font-size: 1.2em !important;
+  }
+}
+.redboost-title {
+  color: #1e1e1e;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 1.5rem; /* Reduced from default h1 size */
+  text-align: left; /* Center the title */
+}
+
+.welcome-text {
+  font-size: 1.2rem; /* Reduced from 1.5rem */
+  color: #4f5d73;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.agenda-description {
+  color: #768192;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 0.9rem; /* Slightly smaller text */
+  max-width: 600px; /* Limit the width for better readability */
+  margin-left: auto; /* Center the block element */
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+.sync-link {
+  color: #221fdb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.sync-link:hover {
+  text-decoration: underline;
+}
+
+.status-dropdown {
+  width: 100%;
+}
+
+.status-dropdown option {
+  padding: 8px;
+}
+
+.status-dropdown option:checked {
+  background-color: #321fdb;
+  color: white;
+}
+
+/* Add this to your CSS file, e.g., RedBoostTaskCalendar.css */
+.search-result-item {
+  transition: background-color 0.3s ease;
+}
+
+.search-result-item:hover {
+  background-color: #f0f0f0; /* Change to your desired hover color */
+}

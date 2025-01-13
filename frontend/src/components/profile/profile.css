@@ -1,0 +1,13 @@
+/* // profile.css */
+.profile-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .profile-links {
+    flex-direction: row;
+    justify-content: center;
+  }
+}

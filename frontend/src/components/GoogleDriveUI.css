@@ -1,0 +1,28 @@
+.folder-path {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.folder-path button {
+  color: #321fdb;
+  text-decoration: none;
+}
+
+.folder-path button:hover {
+  text-decoration: underline;
+}
+
+.list-group-item {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+.file-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+}

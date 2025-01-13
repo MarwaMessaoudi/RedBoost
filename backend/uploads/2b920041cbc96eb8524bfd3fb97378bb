@@ -1,0 +1,5 @@
+// open terminal (power shell)
+// go to the location of the jar file
+// write this line (don't forget to put values for the triangle sides):
+
+java -jar lab2.jar 

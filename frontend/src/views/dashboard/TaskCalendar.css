@@ -1,0 +1,27 @@
+.fullcalendar-container {
+  width: 100%;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+  overflow-y: auto;   /* Allow vertical scrolling if necessary */
+  padding: 10px;      /* Add some padding to prevent content overflow */
+}
+
+.fc {
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.event-content {
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .fullcalendar-container {
+    padding: 0 5px;
+  }
+}
+
+@media (min-width: 768px) {
+  .fullcalendar-container {
+    padding: 0 15px;
+  }
+}

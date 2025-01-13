@@ -1,0 +1,34 @@
+.fullcalendar-container {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.event-content {
+  font-size: 0.85em;
+  padding: 2px 4px;
+}
+
+.fc-event {
+  border-radius: 4px !important;
+}
+
+.fc-event:hover {
+  opacity: 0.9;
+}
+
+.fc-toolbar-title {
+  font-size: 1.2em !important;
+}
+
+@media (max-width: 768px) {
+  .fc-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fc-toolbar-title {
+    font-size: 1em !important;
+  }
+}

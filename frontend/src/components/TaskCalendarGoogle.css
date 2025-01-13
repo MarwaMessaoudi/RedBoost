@@ -1,0 +1,28 @@
+.calendar-container {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.calendar-controls {
+  margin-bottom: 20px;
+}
+
+.events-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.event-item {
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.event-item h5 {
+  margin-bottom: 10px;
+}
+
+.event-item p {
+  margin-bottom: 5px;
+}

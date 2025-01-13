@@ -1,0 +1,149 @@
+@import url("https://fonts.googleapis.com/css2?family=Satisfy&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..1000&family=Satisfy&display=swap");
+.calendar-conatiner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 40px;
+  box-sizing: border-box;
+  position: relative;
+  gap: 20px;
+}
+/* .events-buttons {
+  width: 100%;
+  margin-left: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+} */
+/* .toolbar-calendar {
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #044c54;
+}
+.toolbar-calendar-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toolbar-calendar-btns
+  button:not(.create-event-btn, .create-event-btn-disabled) {
+  padding: 8px 10px;
+  background-color: #044c54;
+  color: white;
+  border: 2px solid #044c54;
+  border-radius: 10px;
+  margin-left: 5px;
+  font-weight: bold;
+} */
+.create-event-btn {
+  padding: 10px 15px;
+  background-color: #044c54;
+  color: white;
+  /* border-radius: 20px; */
+  border: none;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+}
+.create-event-btn-disabled {
+  padding: 10px 15px;
+  background-color: grey;
+  color: white;
+  /* border-radius: 20px; */
+  border: none;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+}
+.calendar-content {
+  width: 100%;
+  height: 600px;
+}
+.calendar-content-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 11%;
+  font-family: "Roboto Flex", sans-serif;
+}
+.calendar-content-title p:not(.current-view-label) {
+  width: 50%;
+  font-size: 35px;
+  font-weight: 300;
+  letter-spacing: 5px;
+  border-bottom: 3px solid #dbdbdb;
+}
+.events-table-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 30%;
+  height: 40%;
+}
+.events-table-container-title {
+  width: 100%;
+  height: 12%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #dce9b8;
+}
+.calendar-content-label {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  border-right: 3px solid #964255;
+}
+.current-view-label {
+  color: black;
+  font-size: 35px;
+  margin-right: 15px;
+  font-family: "Satisfy", "cursive";
+}
+.rbc-month-header {
+  background-image: linear-gradient(to right, #adefa7, #e7f78f);
+}
+.rbc-header {
+  padding: 8px;
+}
+.rbc-row:first-child {
+  background-color: #adefa7;
+}
+.events-table {
+  width: 100%;
+  height: 300px;
+  overflow: auto;
+  margin-bottom: 40px;
+  border-collapse: collapse;
+}
+.events-table thead {
+  background-color: #93bb9f;
+  color: white;
+  height: 10%;
+}
+.events-table thead tr td {
+  text-align: center;
+  width: 50%;
+}
+.events-table tbody tr {
+  height: 10%;
+  border-bottom: 1px solid grey; /* Add a solid border bottom with color #ddd */
+}
+.rbc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
