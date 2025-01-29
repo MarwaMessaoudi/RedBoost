@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const Task = require("./TaskSchema");
 const activitySchema = new mongoose.Schema(
   {
     name: {

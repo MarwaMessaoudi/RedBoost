@@ -3,31 +3,38 @@ const passport = require("passport");
 
 const router = express.Router();
 
-router.post("/register", async (req, res, next) => {
+// Registration Route
+router.post("/register", (req, res, next) => {
   passport.authenticate("signup", async (error, user, info) => {
-    try {
-      console.log("i'm here");
+    if (error) {
+      return res.status(500).json({
+        message: "Something went wrong during registration",
+        error: error.message || "Internal Server Error",
+      });
+    }
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Registration failed",
+        error: info.error || "Invalid registration details",
+      });
+    }
+
+    // Log the user in after successful registration
+    req.login(user, (error) => {
       if (error) {
         return res.status(500).json({
-          message: "Something is wrong in Registration",
-          error: error || "internal server errror",
+          message: "Error logging in after registration",
+          error: error.message || "Internal Server Error",
         });
       }
 
-      req.login(user, async (error) => {
-        if (error) {
-          res.status(500).json({
-            message: "Something is wrong",
-            error: error || "internal server errror",
-          });
-        }
-
-        return res.json({ user, info });
+      return res.status(201).json({
+        message: "Registration successful",
+        user,
       });
-    } catch (error) {
-      return next(error);
-    }
-  })(req, res, next);
+    });
+  })(req, res, next); // Properly invoke passport.authenticate
 });
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../../database/models/AdminSchema");
+const User = require('../../database/models/UserSchema');
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 

@@ -1,14 +1,14 @@
 const passport = require('passport')
 const localStrategy = require('passport-local').Strategy
 const bcrypt = require('bcrypt')
-const UserModel = require('../database/models/AdminSchema')
+const User = require('../database/models/UserSchema')
 
 passport.serializeUser(function (user, done) {
   done(null, user.id)
 })
 
 passport.deserializeUser(function (id, done) {
-  UserModel.findById(id)
+  User.findById(id)
     .then((user) => {
       done(null, user)
     })
@@ -25,74 +25,104 @@ passport.use(
       usernameField: 'email',
       passwordField: 'password',
     },
-    async (email, password, cb) => {
+    async (email, password, done) => {
       try {
-        //Find the user associated with the email provided by the user
-        const user = await UserModel.findOne({ email })
+        console.log('Login request received for email:', email);
+
+        // Find user by email
+        const user = await User.findOne({ email });
         if (!user) {
-          return cb('Email does not exist!', false)
+          console.log('User not found');
+          return done(null, false, { message: 'Email does not exist!' });
         }
-        //Validate password and make sure it matches with the corresponding hash stored in the database
-        //If the passwords match, it returns a value of true.
-        const validatePass = await bcrypt.compare(password, user.password)
-        if (!validatePass) {
-          return cb('Wrong Password!', false)
+
+        // Check password
+        console.log('Validating password...');
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+          console.log('Invalid password');
+          return done(null, false, { message: 'Incorrect password!' });
         }
-        //Send the user information to the next middleware
-        return cb(null, user, { message: 'Logged in success' })
+
+        // Check if user is validated
+      
+       
+ 
+        // Successful login
+        console.log('Login successful for user:', user.username);
+        return done(null, user, { message: 'Logged in successfully' });
       } catch (error) {
-        return cb(error)
+        console.error('Error during login:', error);
+        return done(error);
       }
-    },
-  ),
-)
+    }
+  )
+);
+
 
 //Create a passport middleware to handle user registration
 passport.use(
-  'signup',
+  "signup",
   new localStrategy(
     {
-      usernameField: 'email',
-      passwordField: 'password',
+      usernameField: "email",
+      passwordField: "password",
       passReqToCallback: true,
     },
     async (req, email, password, cb) => {
       try {
-        const { username, phone, role, department } = req.body
-        console.log('req.body =>', req.body)
-        const existingUsername = await UserModel.findOne({ username })
+        console.log("Signup request body:", req.body);
+
+        // Extract additional fields from req.body
+        const { username, phone, role, department } = req.body;
+
+        // Check for existing users
+        console.log("Checking for existing username...");
+        const existingUsername = await User.findOne({ username });
         if (existingUsername) {
-          return cb({ error: 'Username already exists' })
+          console.log("Username already exists");
+          return cb({ error: "Username already exists" });
         }
-        // If Email exists return response to front "Email already exists";
-        const existingEmail = await UserModel.findOne({ email })
+
+        console.log("Checking for existing email...");
+        const existingEmail = await User.findOne({ email });
         if (existingEmail) {
-          return cb({ error: 'Email already exists' })
+          console.log("Email already exists");
+          return cb({ error: "Email already exists" });
         }
-        // If Phone Number exists return response to front "Phone Number already in use";
-        const existingPhoneNumber = await UserModel.findOne({ phone })
+
+        console.log("Checking for existing phone...");
+        const existingPhoneNumber = await User.findOne({ phone });
         if (existingPhoneNumber) {
-          return cb({ error: 'Phone Number already in use' })
+          console.log("Phone number already in use");
+          return cb({ error: "Phone number already in use" });
         }
-        const hashPassword = await bcrypt.hash(password, 10)
-        const user = new UserModel({
-          username: username,
+
+        // Hash the password
+        console.log("Hashing password...");
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        // Save new user
+        console.log("Saving new user...");
+        const user = new User({
+          username,
           email,
           phone,
           role,
           department,
           password: hashPassword,
           confirmation: hashPassword,
-        })
-        const newUser = await user.save()
-        if (newUser) {
-          return cb(null, newUser, {
-            message: 'Registration Succeeded, Welcome On Board!',
-          })
-        }
+        });
+        const newUser = await user.save();
+
+        console.log("New user saved:", newUser);
+        return cb(null, newUser, {
+          message: "Registration succeeded. Welcome on board!",
+        });
       } catch (error) {
-        return cb(error)
+        console.error("Error during signup:", error);
+        return cb(error);
       }
-    },
-  ),
-)
+    }
+  )
+);

@@ -1,13 +1,14 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
+// Define file schema
 const fileSchema = new mongoose.Schema({
   fileName: {
     type: String,
-    required: true,
+    required: false,
   },
   fileUrl: {
     type: String,
-    required: true,
+    required: false,
   },
   uploadedAt: {
     type: Date,
@@ -15,29 +16,19 @@ const fileSchema = new mongoose.Schema({
   },
 });
 
-const kpiSchema = new mongoose.Schema({
-  label: {
-    type: String,
-    required: true,
-  },
-  count: {
-    type: String,
-    required: true,
-  },
-});
-
+// Define comment schema
 const commentSchema = new mongoose.Schema({
   commentId: {
     type: String,
-    required: true,
+    required: false,
   },
   commenter: {
     type: String,
-    required: true,
+    required: false,
   },
   comment: {
     type: String,
-    required: true,
+    required: false,
   },
   commentedAt: {
     type: Date,
@@ -45,11 +36,13 @@ const commentSchema = new mongoose.Schema({
   },
 });
 
+// Define task schema
 const taskSchema = new mongoose.Schema({
   taskName: {
     type: String,
     required: true,
   },
+
   startDate: {
     type: Date,
     required: true,
@@ -60,6 +53,7 @@ const taskSchema = new mongoose.Schema({
   },
   xpPoints: {
     type: Number,
+    default: 0,
   },
   status: {
     type: String,
@@ -71,45 +65,61 @@ const taskSchema = new mongoose.Schema({
       "expired",
       "valid",
     ],
-    required: true,
   },
   color: {
     type: String,
-    required: true,
   },
-  taskOwner: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
-  },
-  resources: {
-    type: [fileSchema],
-    default: [],
-  },
-  deliverables: {
-    type: [fileSchema],
-
-    default: [],
-  },
-  kpis: {
-    type: [kpiSchema],
-
-    default: [],
-  },
-  reports: {
-    type: [kpiSchema],
-
-    default: [],
   },
   activityId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Activity",
     required: true,
   },
+  typeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "TaskType",
+    required: true, // Mark it as required
+  },
+  kpis: [
+    {
+      kpiId: { type: mongoose.Schema.Types.ObjectId, ref: 'kpi' },
+      count: { type: Number, default: 0 },
+      _id: false, // Disable the _id field for each KPI subdocument
+
+    },
+  ],
+  resources: {
+    type: [fileSchema], // Use fileSchema here
+    default: [],
+  },
+  deliverables: {
+    type: [fileSchema], // Use fileSchema here
+    default: [],
+  },
+ 
   comments: {
     type: [commentSchema],
     default: [],
   },
+});
+// Virtual to calculate the status based on dates
+taskSchema.virtual('calculateStatus').get(function () {
+  const currentDate = new Date();
+  if (this.status === 'completed' || this.status === 'cancelled') return this.status;
+
+  if (this.endDate < currentDate) return 'expired';
+  if (this.startDate > currentDate) return 'notStarted';
+  if (this.startDate <= currentDate && this.endDate >= currentDate) return 'inProgress';
+  return 'valid';
+});
+
+taskSchema.pre('save', function (next) {
+  this.status = this.calculateStatus; // Update status before saving
+  next();
 });
 
 module.exports = mongoose.model("Task", taskSchema);

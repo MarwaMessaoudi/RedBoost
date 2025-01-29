@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const UserModel = require("../../database/models/AdminSchema");
+const UserModel = require("../../database/models/UserSchema");
 router.post("/loadCurrentUser", async (req, res) => {
   try {
     // Retrieve email from request body instead of query parameters
@@ -105,5 +105,17 @@ router.put('/updateUser/:userId', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
+router.get('/getUserIdByName/:username', async (req, res) => {
+  const { username } = req.params;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json({ userId: user._id });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error', error });
+  }
+});
 module.exports = router;

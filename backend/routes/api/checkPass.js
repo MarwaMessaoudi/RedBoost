@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const UserModal = require("../../database/models/AdminSchema");
+const User = require('../../database/models/UserSchema');
 
 // Middleware to check if user is authenticated
 router.get("/checkPass", async (req, res) => {

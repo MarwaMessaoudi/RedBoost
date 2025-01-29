@@ -10,12 +10,15 @@ export const loadTask = createAsyncThunk('task/loadTask', async (taskId, { rejec
     return rejectWithValue(error.response.data)
   }
 })
+//**************************************** */
 
+
+//******************************************* */
 export const createTask = createAsyncThunk(
-  'task/addTask',
+  'task/addtask',
   async (taskData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`http://localhost:5000/addTask`, taskData)
+      const response = await axios.post(`http://localhost:5000/addtask`, taskData)
       return response.data
     } catch (error) {
       console.error('Error creating task:', error)
@@ -37,9 +40,9 @@ export const deleteTask = createAsyncThunk(
   },
 )
 
-export const loadTasks = createAsyncThunk('task/loadTasks', async (_, { rejectWithValue }) => {
+export const loadTasks = createAsyncThunk('/loadTasks', async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`http://localhost:5000/loadTasks`)
+    const response = await axios.get(`http://localhost:5000/loadTasks`)
     return response.data
   } catch (error) {
     console.error('Error loading tasks:', error)
@@ -48,11 +51,11 @@ export const loadTasks = createAsyncThunk('task/loadTasks', async (_, { rejectWi
 })
 
 export const loadTasksByActivityId = createAsyncThunk(
-  'task/loadTasksByActivityId',
+  '/loadTasksByActivityId',
   async (activityId, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`http://localhost:5000/loadTasksByActivityId/${activityId}`)
-      return response.data
+      const response = await axios.get(`http://localhost:5000/loadTasksByActivityId/${activityId}`)
+      return response.data.tasks
     } catch (error) {
       console.error('Error loading tasks by activity ID:', error)
       return rejectWithValue(error.response.data)
@@ -80,7 +83,7 @@ export const fetchTasksByUser = createAsyncThunk(
   'task/fetchTasksByUser',
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await axios.post('http://localhost:5000/tasksByUser', { userId });
+      const response = await axios.get('http://localhost:5000/tasksByUser', { userId });
       console.log('API Response:', response.data); // Log response data
       return response.data.tasks; // Assuming response data has a "tasks" field
     } catch (error) {

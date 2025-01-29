@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import {
   CCard,
   CCol,
@@ -6,54 +6,51 @@ import {
   CRow,
   CCardHeader,
   CCardBody,
-  CTable,
-  CTableHead,
-  CTableRow,
-  CTableHeaderCell,
-  CTableDataCell,
-  CTableBody,
   CButton,
-  CPagination,
-  CPaginationItem,
 } from '@coreui/react';
-import { HiMagnifyingGlassCircle } from 'react-icons/hi2';
-import { CChart } from '@coreui/react-chartjs';
 import CIcon from '@coreui/icons-react';
 import { cilCalendar, cilUser } from '@coreui/icons';
-import EditTask from './EditTask';
-import TaskView from './TaskView';
+import TaskType from './TaskType';
 import AddTask from './AddTask';
 import { createTask } from '../../app/features/task/taskSlice';
 import { loadUserById } from '../../app/features/users/usersSlice';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch,useSelector } from 'react-redux';
+import { loadTasksByActivityId } from '../../app/features/task/taskSlice';
 
-function Activity({ activity, tasks }) {
+function Activity({ activity }) {
   const navigate = useNavigate();
-  const dispatch = useDispatch(); // Initialize useDispatch hook
-  const [visible, setVisible] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [selectedTask, setSelectedtask] = useState(null);
-  const [addModalVisible, setAddModalVisible] = useState(false);
+  const dispatch = useDispatch();
+  const tasks = useSelector((state) => state.task.tasksByActivityId); // Get tasks from Redux store
+  const [addTaskStep, setAddTaskStep] = useState(null);
+  const [selectedTaskType, setSelectedTaskType] = useState(null);
   const [userNames, setUserNames] = useState({});
-  const itemsPerPage = 4;
-  const [currentPage, setCurrentPage] = useState(1);
+  const [taskTypes, setTaskTypes] = useState([]);
+
+  useEffect(() => {
+    if (activity._id) {
+      dispatch(loadTasksByActivityId(activity._id));
+    }
+  }, [dispatch, activity._id]);
+  useEffect(() => {
+    if (tasks.length > 0) {
+      console.log('Fetched tasks:', tasks);
+    }
+  }, [tasks]); // Watch for changes in tasks
 
   useEffect(() => {
     const fetchAndStoreUserNames = async () => {
       const userNamesMap = {};
       const promises = [];
-  
+
       for (const task of tasks) {
-        if (!userNamesMap[task.taskOwner]) {
-          console.log(`Fetching user details for user ID: ${task.taskOwner}`);
-          const userDetailsPromise = fetchUserDetails(task.taskOwner)
+        if (!userNamesMap[task.userId]) {
+          console.log('Fetching user details for taskOwner:', task.userId);
+          const userDetailsPromise = fetchUserDetails(task.userId)
             .then(userDetails => {
               if (userDetails) {
-                userNamesMap[task.taskOwner] = userDetails.username;
-                console.log(`Fetched user details:`, userDetails);
-              } else {
-                console.log(`No user details found for user ID: ${task.taskOwner}`);
+                console.log('User details fetched:', userDetails);
+                userNamesMap[task.userId] = userDetails.username;
               }
             })
             .catch(error => {
@@ -62,22 +59,35 @@ function Activity({ activity, tasks }) {
           promises.push(userDetailsPromise);
         }
       }
-  
-      await Promise.all(promises); // Wait for all user details promises to resolve
-      setUserNames(userNamesMap); // Update user names map after all details are fetched
-      console.log('Updated user names map:', userNamesMap);
+
+      await Promise.all(promises);
+      setUserNames(userNamesMap);
     };
-  
+
     if (tasks.length > 0) {
       fetchAndStoreUserNames();
     }
   }, [tasks]);
-  
+
+  // Fetch task types from the backend
+  useEffect(() => {
+    const fetchTaskTypes = async () => {
+      try {
+        const response = await fetch('/tasktypes'); // Adjust the API endpoint as needed
+        const data = await response.json();
+        setTaskTypes(data);
+      } catch (error) {
+        console.error('Error fetching task types:', error);
+      }
+    };
+
+    fetchTaskTypes();
+  }, []);
 
   const fetchUserDetails = async (userId) => {
     try {
+      console.log('Fetching user details for userId:', userId);
       const result = await dispatch(loadUserById(userId));
-      console.log('Dispatch result:', result);
       return result.payload;
     } catch (error) {
       console.error('Error fetching user details:', error);
@@ -85,54 +95,44 @@ function Activity({ activity, tasks }) {
     }
   };
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTasks = tasks.slice(indexOfFirstItem, indexOfLastItem);
-  const paginate = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handleTaskTypeSelect = (type) => {
+    console.log('Task type selected:', type);
+    setSelectedTaskType(type);
+    setAddTaskStep('form');
   };
-
-  const totalPages = Math.ceil(tasks.length / itemsPerPage);
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+  const getTaskTypeName = (typeId) => {
+    const taskType = taskTypes.find((type) => type._id === typeId);
+    return taskType ? taskType.name : 'Unknown Type';
   };
+  
+  tasks.forEach((task) => {
+    console.log(`Task Name: ${task.taskName}, Type: ${getTaskTypeName(task.typeId)}`);
+  });
+  
 
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+  
 
-  const handleAddTask = (Data) => {
+  const handleAddTask = (data) => {
+    console.log('Adding task with data:', data);
     const taskData = {
-      ...Data,
+      ...data,
+      taskType: selectedTaskType._id, // Send the taskTypeId in the request body
       xpPoints: 0,
       resources: [],
       deliverables: [],
-      kpis: [],
       activityId: activity._id,
     };
-    console.log(taskData);
     dispatch(createTask(taskData));
-    setAddModalVisible(false);
+    setAddTaskStep(null);
   };
 
-  const getValidTasks = () => tasks.filter((task) => task.status === 'valid').length;
-  const getProgressTasks = () => tasks.filter((task) => task.status === 'inProgress').length;
-  const getCompletedTasks = () => tasks.filter((task) => task.status === 'completed').length;
-  const getNotStartedTasks = () => tasks.filter((task) => task.status === 'notStarted').length;
-  const getCancelledTasks = () => tasks.filter((task) => task.status === 'cancelled').length;
-  const getExpiredTasks = () => tasks.filter((task) => task.status === 'expired').length;
 
-  const handleViewTask = (task) => {
-    const currentPath = window.location.pathname;
-    navigate(`${currentPath}/${task._id}`);
-  };
+
 
   const TaskStatusCard = ({ status, tasks, color }) => {
+    console.log('Rendering TaskStatusCard for status:', status);
+    console.log('Tasks passed:', tasks);
+
     return (
       <CCol xs={12} md={4}>
         <CCard className="mb-3 card" style={{ height: '400px' }}>
@@ -146,14 +146,15 @@ function Activity({ activity, tasks }) {
             }}
           >
             {status}
-            </CCardHeader>
+          </CCardHeader>
           <CCardBody style={{ overflow: 'auto' }}>
             {tasks.map((task, index) => {
               if (task.status === status) {
+                console.log(`Rendering task with ID: ${task._id} and status: ${status}`);
                 return (
                   <div className="Card_into_card" key={index}>
                     <div
-                      onClick={() => handleViewTask(task)}
+                      onClick={() => navigate(`/Dash/Monitoring/${activity.programId}/${activity._id}/${task._id}`)} // Navigate to task details page
                       className="card border border-success shadow mb-3"
                       style={{ maxWidth: '400px', cursor: 'pointer' }}
                     >
@@ -163,8 +164,12 @@ function Activity({ activity, tasks }) {
                       <div className="card-body">
                         <div className="text-muted mb-2">
                           <CIcon icon={cilUser} className="mr-1" />
-                          Assigned to: {userNames[task.taskOwner] || 'Loading...'}
+                          Assigned to: {userNames[task.userId] || 'Loading...'}
                         </div>
+                        <div className="text-muted mb-2">
+                        <CIcon icon={cilUser} className="mr-1" />
+                        Task Type: {getTaskTypeName(task.typeId)}
+                      </div>
                         <div className="text-muted mb-2">
                           <CIcon icon={cilCalendar} className="mr-1" />
                           Start Date: {new Date(task.startDate).toLocaleDateString()}
@@ -172,9 +177,6 @@ function Activity({ activity, tasks }) {
                         <div className="text-muted mb-2">
                           <CIcon icon={cilCalendar} className="mr-1" />
                           End Date: {new Date(task.endDate).toLocaleDateString()}
-                        </div>
-                        <div className="text-muted">
-                          {task.description}
                         </div>
                       </div>
                     </div>
@@ -190,198 +192,50 @@ function Activity({ activity, tasks }) {
   };
 
   return (
-    <>
-      {addModalVisible && (
-        <AddTask
-          setOpen={setAddModalVisible}
-          open={addModalVisible}
-          handleAddTask={handleAddTask}
-          activity={activity}
+    <CContainer style={{ padding: '20px' }} className="mt-4">
+      <CRow>
+        <CCol>
+          <CButton
+            onClick={() => {
+              console.log('Add Task button clicked');
+              setAddTaskStep('select');
+            }}
+            className="mb-3"
+            shape="rounded"
+            color="primary"
+            style={{ float: 'right' }}
+          >
+            Add Task
+          </CButton>
+        </CCol>
+      </CRow>
+
+      {addTaskStep === 'select' && (
+        <TaskType
+          taskTypes={taskTypes} // Pass taskTypes to the TaskType component
+          onSelectTaskType={handleTaskTypeSelect}
         />
       )}
-      <CContainer style={{ padding: '20px' }} className="mt-4">
-        {selectedTask && (
-          <EditTask
-            visible={visible}
-            setVisible={setVisible}
-            selectedTask={selectedTask}
-            setSelectedtask={setSelectedtask}
-          />
-        )}
-        {selectedTask && <TaskView open={open} setOpen={setOpen} selectedTask={selectedTask} />}
-        <CRow>
-          <CCol>
-            <CButton
-              onClick={() => setAddModalVisible(true)}
-              className="mb-3"
-              rounded="lg"
-              color="primary"
-              style={{ float: 'right' }}
-            >
-              Add Task
-            </CButton>
-          </CCol>
-        </CRow>
-        <CRow className="mb-3">
-          <TaskStatusCard status={'notStarted'} tasks={tasks} color={'#006666'} />
-          <TaskStatusCard status="inProgress" tasks={tasks} color={'#fb5858'} />
-          <TaskStatusCard status={'completed'} tasks={tasks} color={'#0ca279'} />
-          <TaskStatusCard status={'valid'} tasks={tasks} color={'#074a38'} />
-          <TaskStatusCard status={'expired'} tasks={tasks} color={'#dab600'} />
-          <TaskStatusCard status={'cancelled'} tasks={tasks} color={'grey'} />
-        </CRow>
-        <CRow>
-          <CCol>
-            <CCard className="mb-3">
-              <CCardHeader className="bg-dark text-light">Recent Tasks</CCardHeader>
-              <CCardBody>
-                <style>
-                  {`
-                    .table-row:hover {
-                      cursor: pointer; /* Change the cursor to pointer */
-                      transform: scale(1.05); /* Slightly increase the size */
-                      transition: transform 0.8s ease; /* Smooth transition */
-                      background-color: #e0e0e0; /* Change the background color on hover */
-                      transition: background-color 0.8s ease; /* Smooth transition */
-                    }
-                    .Card_into_card:hover .card {
-                      transform: scale(1.05); /* Slightly increase the size */
-                      transition: transform 0.3s ease; /* Smooth transition */
-                    }
-                    
-                  `}
-                </style>
-                <CTable striped responsive className="text-center">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell scope="col">Target Date</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Task Name</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Status</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">View</CTableHeaderCell>
-                    </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {currentTasks.map((task, index) => (
-                      <CTableRow
-                        key={index}
-                        onClick={() => handleViewTask(task)}
-                        className="table-row rows_of_table"
-                      >
-                        <CTableDataCell>
-                          {new Date(task.endDate).toLocaleDateString()}
-                        </CTableDataCell>
-                        <CTableDataCell>{task.taskName}</CTableDataCell>
-                        <CTableDataCell>{task.status}</CTableDataCell>
-                        <CTableDataCell>
-                          <HiMagnifyingGlassCircle
-                            role="button"
-                            style={{ fontSize: '25px', color: '#4CAF50' }}
-                            onClick={(e) => {
-                              e.stopPropagation() // Prevent the click event from bubbling up to the row
-                              handleViewTask(task)
-                            }}
-                          />
-                        </CTableDataCell>
-                      </CTableRow>
-                    ))}
-                  </CTableBody>
-                </CTable>
-                <CPagination align="center">
-                  <CPaginationItem
-                    onClick={goToPreviousPage}
-                    disabled={currentPage <= 1}
-                    aria-label="Previous"
-                  >
-                    Previous
-                  </CPaginationItem>
-                  {Array.from({ length: totalPages }, (_, index) => (
-                    <CPaginationItem
-                      key={index}
-                      active={index + 1 === currentPage}
-                      onClick={() => paginate(index + 1)}
-                    >
-                      {index + 1}
-                    </CPaginationItem>
-                  ))}
-                  <CPaginationItem
-                    onClick={goToNextPage}
-                    disabled={currentPage >= totalPages}
-                    aria-label="Next"
-                  >
-                    Next
-                  </CPaginationItem>
-                </CPagination>
-              </CCardBody>
-            </CCard>
-          </CCol>
-          <CCol>
-            <CCard className="mb-3">
-              <CCardHeader className="bg-dark text-light">Task Progress</CCardHeader>
-              <CCardBody>
-                <CChart
-                  type="bar"
-                  data={{
-                    labels: [
-                      'Total Tasks',
-                      'In Progress',
-                      'Completed',
-                      'Valid',
-                      'Expired',
-                      'Cancelled',
-                      'Not Started',
-                    ],
-                    datasets: [
-                      {
-                        label: 'Task Progress',
-                        backgroundColor: ['pink', 'lightgreen', 'green', 'yellow', 'grey', 'blue'],
-                        data: [
-                          tasks.length,
-                          getProgressTasks(),
-                          getCompletedTasks(),
-                          getValidTasks(),
-                          getExpiredTasks(),
-                          getCancelledTasks(),
-                          getNotStartedTasks(),
-                        ],
-                      },
-                    ],
-                  }}
-                  labels="Status"
-                  options={{
-                    plugins: {
-                      legend: {
-                        labels: {
-                          color: '#adb7c5',
-                        },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        grid: {
-                          color: '#adb7c5',
-                        },
-                        ticks: {
-                          color: '#adb7c5',
-                        },
-                      },
-                      y: {
-                        grid: {
-                          color: '#adb7c5',
-                        },
-                        ticks: {
-                          color: '#adb7c5',
-                        },
-                      },
-                    },
-                  }}
-                />
-              </CCardBody>
-            </CCard>
-          </CCol>
-        </CRow>
-      </CContainer>
-    </>
-  )
+
+      {addTaskStep === 'form' && (
+        <AddTask
+          taskType={selectedTaskType}
+          onAddTask={handleAddTask}
+          onCancel={() => setAddTaskStep(null)}
+          activityId={activity._id} // Pass activityId
+        />
+      )}
+
+      <CRow className="mb-3">
+        <TaskStatusCard status="notStarted" tasks={tasks} color="#006666" />
+        <TaskStatusCard status="inProgress" tasks={tasks} color="#fb5858" />
+        <TaskStatusCard status="completed" tasks={tasks} color="#0ca279" />
+        <TaskStatusCard status="valid" tasks={tasks} color="#074a38" />
+        <TaskStatusCard status="expired" tasks={tasks} color="#dab600" />
+        <TaskStatusCard status="cancelled" tasks={tasks} color="grey" />
+      </CRow>
+    </CContainer>
+  );
 }
 
-export default Activity
+export default Activity;

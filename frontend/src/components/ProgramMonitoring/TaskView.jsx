@@ -19,6 +19,8 @@ import Uploader from './Uploader'
 function TaskView({ open, setOpen, selectedTask }) {
   const handleClose = () => {
     setOpen(false)
+    console.log('Selected Task:', selectedTask);
+
   }
   return (
     <CModal fullscreen visible={open} onClose={handleClose} aria-labelledby="FullscreenExample1">
@@ -29,6 +31,7 @@ function TaskView({ open, setOpen, selectedTask }) {
         <CRow className="mb-0">
           <CCol xs={12} md={6}>
             <StatisticsSection selectedTask={selectedTask} />
+            
           </CCol>
           <CCol xs={12} md={6}>
             <Uploader />

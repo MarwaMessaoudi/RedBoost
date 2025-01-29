@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const User = require("../../database/models/AdminSchema");
+const User = require('../../database/models/UserSchema');
 
 // Multer middleware for handling multipart/form-data (used for file uploads)
 const multer = require("multer");

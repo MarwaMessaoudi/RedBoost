@@ -31,6 +31,7 @@ const EventModal = ({ selectedEvent, setSelectedEvent }) => {
               <p>
                 <strong>Start:</strong> {new Date(selectedEvent.start).toLocaleString()}
               </p>
+              q
               <p>
                 <strong>End:</strong> {new Date(selectedEvent.end).toLocaleString()}
               </p>

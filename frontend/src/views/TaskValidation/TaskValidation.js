@@ -249,7 +249,7 @@ const TaskValidation = () => {
                     <CTableDataCell>
                       <span className="ms-2">{user?.username}</span>
                     </CTableDataCell>
-                    <CTableDataCell>
+                    <CTableDataCell>²
                       <span className={`badge ${getStatusColor(task.status)}`}>{task.status}</span>
                     </CTableDataCell>
                     <CTableDataCell>{task.xpPoints}XP</CTableDataCell>

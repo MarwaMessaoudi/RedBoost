@@ -11,13 +11,16 @@ const cloudinary = require("cloudinary").v2;
 const helmet = require("helmet");
 const mongoose = require("mongoose");
 const multer = require("multer");
-
+const Kpi = require('./database/models/KpiSchema'); // Correct model import
+const LocalStrategy = require("passport-local").Strategy;
+const User = require('./database/models/UserSchema');
 // Connect to MongoDB
 const db = process.env.DATABASE_URI;
 const secret = process.env.SECRET;
 const PORT = process.env.PORT || 5000;
 const app = express();
 const nodemailer = require('nodemailer');
+
 // Cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -45,10 +48,11 @@ const handleProgram = require("./routes/api/handleProgram");
 const handleActivity = require("./routes/api/handleActivity");
 const hundleEntrepreneur = require("./routes/api/hundleEntrepreneur");
 const handleStartups = require("./routes/api/handleStartups");
-const handleTask = require("./routes/api/handleTask");
 const sessionsRoute = require("./routes/api/Sessions");
-
-const emailRouter = require("./routes/api/emailRouter")
+//const handleKpi = require("./routes/api/handleKpi");
+const taskRoutes = require("./routes/api/taskController"); // Import the task controller
+const handleKpi = require("./routes/api/handleKpi");
+const emailRouter = require("./routes/api/emailRouter");
 
 require("./passport/index");
 
@@ -64,11 +68,15 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.json());
 
-
+//app.use("/kpis", handleKpi);
+app.use('/', taskRoutes); // Use the task controller as middleware
+app.use('/', handleKpi);
 const store = new MongoDBSession({
   uri: db,
   collection: "sessions",
 });
+
+
 
 // Add event listeners to the store
 store.on("connected", () => {
@@ -93,7 +101,6 @@ app.use(
     },
   })
 );
-
 
 // Cloudinary file upload routes
 app.post("/upload", upload.single("file"), (req, res) => {
@@ -134,14 +141,7 @@ app.post("/uploadLogo", upload.single("logo"), (req, res) => {
 
 app.use(passport.initialize());
 app.use(passport.session());
-// app.use(
-//   helmet.contentSecurityPolicy({
-//     directives: {
-//       defaultSrc: ["'self'"],
-//       imgSrc: ["'self'", "data:", "https://res.cloudinary.com/"],
-//     },
-//   })
-// );
+
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, "../frontend/build")));
@@ -185,24 +185,18 @@ app.post("/loadActivitiesByProgramId/:programId", handleActivity);
 app.post("/createentrepreneurs", hundleEntrepreneur);
 app.post("/createstartup", handleStartups);
 app.get("/loadAllentrepreneurs", hundleEntrepreneur);
-app.post("/addTask", handleTask);
-app.post("/loadTaskById", handleTask);
-app.delete("/deleteTask/:taskId", handleTask);
-app.put("/updateTask/:taskId", handleTask);
-app.post("/loadTasks", handleTask);
-app.post("/loadTasksByActivityId/:activityId", handleTask);
-app.post("/tasksByUser", handleTask);  // Register the new route
+
 app.get("/sessions", sessionsRoute);
 app.delete("/deleteEntrepreneur/:id",hundleEntrepreneur)
 app.put("/updateEntrepreneur/:id",hundleEntrepreneur)
 app.get("/filterEntrepreneurs",hundleEntrepreneur);
-app.delete("/deleteDeliverable/:taskId/deliverables/:deliverableId", handleTask); // New route
 
 // The "catchall" handler: for any request that doesn't match one above, send back index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
 });
-app.post("/sendEmail",emailRouter)
+app.post("/sendEmail", emailRouter);
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -213,6 +207,9 @@ app.use((err, req, res, next) => {
 mongoose
   .connect(db)
   .then(() => {
+    
+    
+
     app.listen(PORT, () => {
       console.log("Database Connected!");
       console.log(`Server is running on PORT: ${PORT}`);
