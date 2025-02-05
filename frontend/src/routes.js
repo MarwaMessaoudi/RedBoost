@@ -1,3 +1,4 @@
+import path from 'path';
 import { element } from 'prop-types'
 import React from 'react'
 
@@ -24,8 +25,14 @@ const CreateContact = React.lazy(() => import('./views/contacts/CreateContact'))
 
 const Users = React.lazy(() => import('./views/users/users'))
 const TaskValidation = React.lazy(() => import('./views/TaskValidation/TaskValidation'))
-const StatisticsEntrepeneurs = React.lazy(() => import('./views/Statistics/EntrepreneurStat'))
-const StartupsAccelerated = React.lazy(() => import('./views/Statistics/StartupsAccelerated'))
+const MobilisationStatistics = React.lazy(() => import('./views/Statistics/MobilisationStatistics'))
+const Avancement = React.lazy(() => import('./views/Statistics/Avancement'))
+const Participation  = React.lazy(() => import('./views/Statistics/Participation'))
+const Evaluation  = React.lazy(() => import('./views/Statistics/Evaluation'))
+const ProfileParticipant  = React.lazy(() => import('./views/Statistics/ProfileParticipant'))
+const Parteneriats = React.lazy(() => import('./views/Statistics/Parteneriats'))
+const Logistique = React.lazy(() => import('./views/Statistics/Logistique'))
+const Media = React.lazy(() => import('./views/Statistics/Media'))
 const reportingScreen =React.lazy(()=> import('./views/reporting/reportingScreen'))
 const FileUpload =React.lazy(()=> import('./components/FileUpload'))
 const redboostDrive =React.lazy(()=> import('./views/drive/redboostDrive'))
@@ -51,16 +58,45 @@ const routes = [
   { path: '/allContacts', name: 'All Contacts', element: AllContacts },
   { path: '/Contacts/EntrepConacts', name: 'Entrepreneurs Contacts', element: EntrepConacts },
   {
-    path: '/statistics/entrepreneurs',
-    name: 'StatisticsEntrepeneurs',
-    element: StatisticsEntrepeneurs,
+    path : '/statistics/mobilisation',
+    name : 'MobilisationStatistics',
+    element : MobilisationStatistics
   },
   {
-    path: '/statistics/startupsAccelerated',
-    name: 'StartupsAccelerated',
-    element: StartupsAccelerated,
+    path : '/statistics/avancement',
+    name : 'Avancement',
+    element : Avancement
   },
-
+  {
+    path : '/statistics/participation',
+    name : 'Participation',
+    element : Participation
+  },
+  {
+    path : '/statistics/evaluation',
+    name : 'Evaluation',
+    element : Evaluation
+  },
+  {
+    path : '/statistics/profileparticipant',
+    name : 'ProfileParticipant',
+    element : ProfileParticipant
+  },
+  {
+    path : '/statistics/parteneriats',
+    name : 'Parteneriats',
+    element : Parteneriats
+  },
+  {
+    path : '/statistics/logistique',
+    name : 'Logistique',
+    element : Logistique
+  },
+  {
+    path : '/statistics/media',
+    name : 'Media',
+    element : Media
+  },
   { path: '/entrepeneurs', name: 'Entrepeneurs', element: EntrepreneursTable },
   { path: '/entrepeneurs/:id', name: ' entrepeneur', element: EntrepreneurDetails},
   { path: '/category', name: ' categories', element: CategoryMain },

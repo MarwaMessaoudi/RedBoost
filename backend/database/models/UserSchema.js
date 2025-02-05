@@ -41,19 +41,17 @@ const UserSchema = new mongoose.Schema({
   department: String,
   password: {
     type: String,
-    unique: true,
-    required: true,
+    required: false,
   },
   confirmation: {
     type: String,
-    unique: true,
-    required: true,
+    required: false,
   },
   validation: {
     type: Boolean,
     default: false,
   },
-  adress: {
+  address: {
     type: String,
     default: "Undefined",
   },
@@ -92,6 +90,15 @@ const UserSchema = new mongoose.Schema({
   bio: {
     type: String,
     default: "Undefined",
+  },
+  // 📌 Add these fields for password reset functionality
+  resetToken: {
+    type: String,
+    default: null,
+  },
+  resetTokenExpires: {
+    type: Date,
+    default: null,
   },
 });
 

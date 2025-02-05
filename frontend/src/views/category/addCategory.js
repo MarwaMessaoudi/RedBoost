@@ -23,7 +23,7 @@ const AddCategoryPage = () => {
     e.preventDefault();
     try {
       // Send form data to the backend
-      const response = await axios.post('YOUR_BACKEND_ENDPOINT', formData);
+      const response = await axios.post(process.env.BACKEND, formData);
       console.log(response.data); // Log response from backend
       // Reset form data after successful submission
       setFormData({

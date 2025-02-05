@@ -32,7 +32,7 @@ cloudinary.config({
 const upload = multer({ dest: "uploads/" });
 
 // Import Routes
-const signupRoute = require("./routes/api/register");
+const registerUser = require("./routes/api/register");
 const loginRoute = require("./routes/api/login");
 const checkAuthRoute = require("./routes/api/checkAuth");
 const logoutRoute = require("./routes/api/logout");
@@ -157,7 +157,7 @@ app.use((req, res, next) => {
 });
 
 // Define routes
-app.post("/register", signupRoute);
+app.use("/api", registerUser);
 app.post("/login", loginRoute);
 app.post("/events", AddEvent);
 app.post("/forget-password", forgetPassword);

@@ -13,6 +13,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { loadUserData } from './app/features/userData/userData'
 // import ProtectedRoute from './ProtectedRoute'
 import Task from './components/ProgramMonitoring/Task'
+import ResetUserPassword from './views/pages/register/ResetUserPassword'
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
@@ -88,6 +89,7 @@ const App = () => {
   <Route exact path="/500" name="Page 500" element={<Page500 />} />
   <Route exact path="/password-reset" name=" Account Recovery" element={<ResetPassword />} />
   <Route path="/Dash/*" element={isLogged ? <DefaultLayout /> : <Navigate to="/" />} />
+  <Route path="/reset-password/:token" element={<ResetUserPassword/>} />
   <Route path="/Dash/Monitoring/:programId/:activityId/:taskId" element={<Task />} />
   </Routes>
 

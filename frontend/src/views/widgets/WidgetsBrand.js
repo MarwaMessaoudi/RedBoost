@@ -171,6 +171,7 @@ const WidgetsBrand = (props) => {
         />
       </CCol>
     </CRow>
+    
   )
 }
 
