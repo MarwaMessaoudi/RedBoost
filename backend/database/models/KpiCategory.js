@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-const mongoose = require('mongoose');
 
 // Define the KPI Category schema
 const kpiCategorySchema = new mongoose.Schema({
@@ -10,6 +9,6 @@ const kpiCategorySchema = new mongoose.Schema({
   },
 });
 
-const KPICategory = mongoose.model('KPICategory', kpiCategorySchema); // Create the KPI Category model
+const kpicategory = mongoose.model('kpicategory', kpiCategorySchema); // Create the KPI Category model
 
-module.exports = KPICategory;
+module.exports = kpicategory;

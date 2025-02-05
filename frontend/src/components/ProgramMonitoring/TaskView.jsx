@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux'
 import StatisticsSection from './StaticSection'
 import CommentSection from './CommentSection'
 import Uploader from './Uploader'
+
 function TaskView({ open, setOpen, selectedTask }) {
   const handleClose = () => {
     setOpen(false)

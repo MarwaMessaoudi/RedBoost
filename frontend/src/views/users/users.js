@@ -45,7 +45,7 @@ function Users() {
   };
 
   const deleteUser = async (userId) => {
-    if (currentUser.role !== "Super Admin") {
+    if (currentUser.role !== "superAdmin") {
       notifyUnauthorized();
       return;
     }
@@ -79,7 +79,7 @@ function Users() {
   };
 
   const handleEdit = (user) => {
-    if (currentUser.role !== "Super Admin") {
+    if (currentUser.role !== "superAdmin") {
       notifyUnauthorized();
       return;
     }
@@ -88,7 +88,7 @@ function Users() {
   };
 
   const handleView = (user) => {
-    if (currentUser.role !== "Super Admin") {
+    if (currentUser.role !== "superAdmin") {
       notifyUnauthorized();
       return;
     }
@@ -110,7 +110,7 @@ function Users() {
 
   return (
     <div className="container">
-      {currentUser.role === "Super Admin" && (
+      {currentUser.role === "superAdmin" && (
         <div className="d-flex justify-content-end mt-3 mb-3">
           <button className="btn btn-primary" onClick={() => setShowForm(true)}>
             Add User

@@ -100,11 +100,24 @@ const taskSchema = new mongoose.Schema({
     type: [fileSchema], // Use fileSchema here
     default: [],
   },
+
+  reports: [
+    {
+      title: { type: String, required: true }, // Report title
+      content: { type: String, required: true }, // Report content
+      _id: false, // Disable the _id field for each report subdocument
+    },
+  ],
  
   comments: {
     type: [commentSchema],
     default: [],
   },
+
+
+
+
+  
 });
 // Virtual to calculate the status based on dates
 taskSchema.virtual('calculateStatus').get(function () {

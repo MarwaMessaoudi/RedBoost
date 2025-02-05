@@ -37,6 +37,7 @@ import { useParams } from 'react-router-dom';
 const Task = () => {
   const dispatch = useDispatch();
   const { taskId } = useParams();
+  
   const [user, setUser] = useState(null);
   const [currentTask, setCurrentTask] = useState({
     taskName: '',
@@ -48,6 +49,7 @@ const Task = () => {
     reports: [], // Default empty array
     kpis: [], // Default empty array
   });
+
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [newDeliverableName, setNewDeliverableName] = useState('');
@@ -57,18 +59,34 @@ const Task = () => {
   const [deliverableFile, setDeliverableFile] = useState(null);
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [showKPIs, setShowKPIs] = useState(false); // Control visibility of KPIs
+  const [allKPIs, setAllKPIs] = useState([]);
 
+  // State variables to track the status of each section
+  const [reportsStatus, setReportsStatus] = useState(false);
+  const [deliverablesStatus, setDeliverablesStatus] = useState(false);
+  const [kpisStatus, setKpisStatus] = useState(false);
+  const [taskStatus, setTaskStatus] = useState('invalid');
 
+  useEffect(() => {
+    const fetchKPIs = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/allkpi");
+        console.log("Received KPIs:", response.data); // Log response to verify data structure
+        if (Array.isArray(response.data)) {
+          setAllKPIs(response.data.map(kpi => ({ ...kpi, count: 0 }))); // Initialize count to 0
+        } else {
+          console.error("Received data is not an array:", response.data);
+          setAllKPIs([]);
+        }
+      } catch (error) {
+        console.error("Error fetching KPIs:", error);
+        setAllKPIs([]);
+      }
+    };
 
-
-
-
-
-
-
-
-
-
+    fetchKPIs();
+  }, []);
 
   // Fetch task details by taskId when component mounts
   useEffect(() => {
@@ -106,6 +124,27 @@ const Task = () => {
     fetchTaskDetails();
   }, [taskId, dispatch]);
 
+  useEffect(() => {
+    setReportsStatus(currentTask.reports.length > 0);
+  }, [currentTask.reports]);
+
+  useEffect(() => {
+    setDeliverablesStatus(currentTask.deliverables.length > 0);
+  }, [currentTask.deliverables]);
+
+  useEffect(() => {
+    const allKPIsHaveValues = currentTask.kpis.every(kpi => kpi.count > 0);
+    setKpisStatus(currentTask.kpis.length > 0 && allKPIsHaveValues);
+  }, [currentTask.kpis]);
+
+  useEffect(() => {
+    if (reportsStatus && deliverablesStatus && kpisStatus) {
+      setTaskStatus('valid');
+    } else {
+      setTaskStatus('invalid');
+    }
+  }, [reportsStatus, deliverablesStatus, kpisStatus]);
+
   if (loading) {
     return <div>Loading task details...</div>;
   }
@@ -140,13 +179,27 @@ const Task = () => {
 
   const handleAddKpi = (kpiLabel) => {
     if (!kpiLabel) return;
-
+  
+    // Find the KPI object from allKPIs
+    const kpiToAdd = allKPIs.find((kpi) => kpi.label === kpiLabel);
+    if (!kpiToAdd) {
+      toast.error("KPI not found");
+      return;
+    }
+  
+    // Check if KPI already exists in the task
     const existingKpi = currentTask.kpis.find((kpi) => kpi.kpiId.label === kpiLabel);
     if (!existingKpi) {
-      const updatedKpis = [...currentTask.kpis, { kpiId: { label: kpiLabel }, count: 0 }];
+      const updatedKpis = [...currentTask.kpis, { kpiId: kpiToAdd, count: 0 }];
       const updatedTask = { ...currentTask, kpis: updatedKpis };
+  
       setCurrentTask(updatedTask);
-      dispatch(updateTask({ taskId: currentTask._id, taskData: updatedTask }));
+  
+      dispatch(updateTask({ taskId: currentTask._id, taskData: updatedTask }))
+        .then(() => toast.success("KPI added successfully"))
+        .catch(() => toast.error("Failed to add KPI"));
+    } else {
+      toast.info("KPI already exists in the task");
     }
   };
 
@@ -173,6 +226,7 @@ const Task = () => {
             const updatedTask = { ...currentTask, deliverables: [...currentTask.deliverables, newDeliverable] };
             setCurrentTask(updatedTask);
             dispatch(updateTask({ taskId: currentTask._id, taskData: updatedTask }));
+
             setNewDeliverableName('');
             setDeliverableFile(null);
             setProgress(0);
@@ -184,18 +238,66 @@ const Task = () => {
     }
   };
 
-  const handleDeleteDeliverable = async (deliverableId, fileUrl) => {
+  
+  const handleDeleteDeliverable = async (deliverableId, fileUrl, taskId) => {
     try {
+      // Create a reference to the file to delete
       const fileRef = ref(storage, fileUrl);
+  
+      // Delete the file from Firebase Storage
       await deleteObject(fileRef);
-      setCurrentTask((prevTask) => ({
-        ...prevTask,
-        deliverables: prevTask.deliverables.filter((deliverable) => deliverable.id !== deliverableId),
-      }));
+      console.log('File deleted successfully from Firebase Storage.');
+  
+      // Delete the deliverable from MongoDB
+      const response = await axios.delete(`http://localhost:5000/deleteDeliverable/${taskId}/deliverables/${deliverableId}`);
+      if (response.status === 200) {
+        console.log('Deliverable deleted successfully from MongoDB.');
+  
+        // Now, remove the deliverable from your application's state
+        setCurrentTask((prevTask) => ({
+          ...prevTask,
+          deliverables: prevTask.deliverables.filter((deliverable) => deliverable._id !== deliverableId), // Ensure you're using the correct identifier
+        }));
+      } else {
+        console.error('Failed to delete deliverable from MongoDB:', response.data);
+      }
+  
     } catch (error) {
-      console.error('Error deleting file:', error);
+      console.error('Error deleting file or deliverable:', error.response || error.message);
     }
   };
+
+
+  /* const handleDeleteDeliverable = async (deliverableId, fileUrl) => {
+    try {
+      // Create a reference to the file to delete
+      const fileRef = ref(storage, fileUrl);
+
+      // Delete the file from Firebase Storage
+      await deleteObject(fileRef);
+      console.log('File deleted successfully from Firebase Storage.');
+
+      // Delete the deliverable from MongoDB
+      const response = await axios.delete("http://localhost:5000/deleteDeliverable/${taskId}/deliverables/${deliverableId}");
+      if (response.status === 200) {
+        console.log('Deliverable deleted successfully from MongoDB.');
+
+        // Now, remove the deliverable from your application's state
+        setCurrentTask((prevTask) => ({
+          ...prevTask,
+          deliverables: prevTask.deliverables.filter((deliverable) => deliverable._id !== deliverableId), // Ensure you're using the correct identifier
+        }));
+      } else {
+        console.error('Failed to delete deliverable from MongoDB:', response.data);
+      }
+
+    } catch (error) {
+      console.error('Error deleting file or deliverable:', error.response || error.message);
+    }
+  };
+ */
+
+
 
   const handleAddRapport = () => {
     if (newRapportTitle === '') {
@@ -205,7 +307,7 @@ const Task = () => {
     }
     const updatedTask = {
       ...currentTask,
-      reports: [...currentTask.reports, { label: newRapportTitle, count: newRapportText }],
+      reports: [...currentTask.reports, { title: newRapportTitle, content: newRapportText }],
     };
     dispatch(updateTask({ taskId: currentTask._id, taskData: updatedTask }));
     setCurrentTask(updatedTask);
@@ -257,14 +359,17 @@ const Task = () => {
   };
 
   const handleKpiValueChange = (kpiLabel, value) => {
-    const updatedKpis = currentTask.kpis.map((kpi) =>
-      kpi.kpiId.label === kpiLabel ? { ...kpi, count: value } : kpi
+    const updatedTaskKpis = currentTask.kpis.map((kpi) =>
+      kpi.kpiId.label === kpiLabel ? { ...kpi, count: Number(value) } : kpi
     );
-    setCurrentTask({ ...currentTask, kpis: updatedKpis });
+  
+    setCurrentTask({ ...currentTask, kpis: updatedTaskKpis });
   };
 
   const handleUpdateKpis = async () => {
     try {
+      console.log("Updating KPIs with data:", currentTask.kpis); // Log the data being sent
+
       // Prepare the data for the backend
       const kpiUpdates = currentTask.kpis.map((kpi) => ({
         kpiId: kpi.kpiId._id, // Use the _id field of kpiId
@@ -289,28 +394,49 @@ const Task = () => {
       toast.error('Error updating KPIs');
     }
   };
-useEffect(() => {
-    axios.get("/allkpi") // Replace with your actual API endpoint
-      .then((response) => {
-        setKpiList(response.data); // Set KPI list from API response
+
+  const handleDeleteReport = (index) => {
+    const updatedReports = currentTask.reports.filter((_, i) => i !== index);
+    const updatedTask = {
+      ...currentTask,
+      reports: updatedReports,
+    };
+    dispatch(
+      updateTask({
+        taskId: currentTask._id,
+        taskData: updatedTask,
       })
-      .catch((error) => console.error("Error fetching KPIs:", error));
-  }, []);
-  
+    );
+
+    // Reload the page or update the state if you don't want a full reload
+    window.location.reload();
+  };
+
+  const getSectionStyle = (status) => ({
+    border: status ? '2px solid green' : '2px solid red',
+    padding: '10px',
+    marginBottom: '10px',
+  });
+
+  const getTaskStyle = (status) => ({
+    border: status === 'valid' ? '2px solid green' : '2px solid red',
+    padding: '10px',
+    marginBottom: '10px',
+  });
 
   return (
     <>
       <ToastContainer />
       <CRow>
         <CCol>
-          <div className="card mb-3" style={{ maxWidth: '540px' }}>
+          <div className="card mb-3" style={{ ...getTaskStyle(taskStatus), maxWidth: '540px' }}>
             <div className="row g-0">
               <div className="col-md-4">
                 <img src={img} alt="Trendy Pants and Shoes" className="img-fluid rounded-start" />
               </div>
               <div className="col-md-8">
                 <div className="card-body">
-                  <h5 className="card-title">Task Details</h5>
+                  <h5 className="card-title">Task Details !!!!!!</h5>
                   <p className="card-text">
                     <strong>Task Name:</strong> {currentTask.taskName}
                   </p>
@@ -321,8 +447,9 @@ useEffect(() => {
                     <strong>Target Date:</strong> {formatDate(currentTask.endDate)}
                   </p>
                   <p className="card-text">
-                    <strong>Status:</strong> {currentTask.status}
+                  <strong>Status:</strong> {taskStatus === 'valid' ? 'Valid' : 'Invalid'}
                   </p>
+                  
                   {currentTask.status === 'inProgress' ? (
                     <CFormCheck
                       className="mb-3"
@@ -340,76 +467,66 @@ useEffect(() => {
             </div>
           </div>
         </CCol>
-        <CCol>
-          <CCard>
-            <CCardHeader className="bg-dark text-light">Resources</CCardHeader>
-            <CCardBody>
-              <div>
-                <h5>{currentTask.taskName} Resources:</h5>
-                <CListGroup>
-                  {currentTask.resources.map((resource, index) => (
-                    <CListGroupItem key={index}>
-                      <CButton href={resource.url} download color="link">
-                        {resource.fileName}
-                      </CButton>
-                    </CListGroupItem>
-                  ))}
-                </CListGroup>
-              </div>
-            </CCardBody>
-          </CCard>
-        </CCol>
       </CRow>
+
       <CCard className="mt-3 mb-3">
         <CCardHeader className="bg-dark text-light">Sections</CCardHeader>
         <CCardBody>
-          <CCard className="mt-3 mb-3">
-            <CCardHeader className="bg-info text-light">KPIs</CCardHeader>
+          {/* Task KPIs */}
+          <CCard className="mt-3 mb-3" style={getSectionStyle(kpisStatus)}>
+            <CCardHeader className="bg-info text-light"> KPIs Section</CCardHeader>
             <CCardBody>
-              <div className="form-group d-flex align-items-center mt-3 mb-3">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search KPIs"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              {searchTerm && (
+    {/* Search Bar */}
+
+
+              <CFormInput
+                type="text"
+                placeholder="Search KPIs"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value.trim() !== "") {
+                    setShowKPIs(true); // Show KPIs when typing in the search bar
+                  } else {
+                    setShowKPIs(false); // Hide KPIs when search bar is empty
+                  }
+                }}
+                onFocus={() => {
+                  if (searchTerm.trim() !== "") {
+                    setShowKPIs(true); // Show KPIs when search bar is focused and has text
+                  }
+                }}
+                className="mb-3"
+              />
+              {showKPIs && (
                 <table className="table table-striped table-bordered">
                   <thead className="table-dark">
                     <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">KPI Label</th>
-                      <th scope="col">KPI Value</th>
-                      <th scope="col">Actions</th>
+                      <th>#</th>
+                      <th>KPI Label</th>
+                      <th>KPI Value</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {currentTask.kpis
-                      .filter((kpi) => {
-                        if (!kpi || !kpi.kpiId || !kpi.kpiId.label) return false;
-                        return kpi.kpiId.label.toLowerCase().includes(searchTerm.toLowerCase());
-                      })
+                    {allKPIs
+                      .filter((kpi) => kpi.label.toLowerCase().includes(searchTerm.toLowerCase()))
                       .map((kpi, index) => (
                         <tr key={index}>
-                          <th scope="row">{index + 1}</th>
-                          <td>{kpi.kpiId.label}</td>
+                          <td>{index + 1}</td>
+                          <td>{kpi.label}</td>
                           <td>
                             <input
                               type="number"
                               value={kpi.count}
                               onChange={(e) =>
-                                handleKpiValueChange(kpi.kpiId.label, parseInt(e.target.value, 10))
+                                handleKpiValueChange(kpi.kpiId.label, parseInt(e.target.value))
                               }
                             />
                           </td>
                           <td>
-                            <CButton
-                              color="danger"
-                              onClick={() => handleDeleteKpi(kpi.kpiId.label)}
-                            >
-                              Delete
+                            <CButton color="success" onClick={() => handleAddKpi(kpi.label)}>
+                              Add to Task
                             </CButton>
                           </td>
                         </tr>
@@ -417,17 +534,51 @@ useEffect(() => {
                   </tbody>
                 </table>
               )}
-              <CButton
-                color="primary"
-                onClick={handleUpdateKpis}
-                className="mt-3"
-              >
-                Update KPI
+            </CCardBody>
+
+            <CCardBody>
+              <table className="table table-striped table-bordered">
+                <thead className="table-dark">
+                  <tr>
+                    <th>#</th>
+                    <th>KPI Label</th>
+                    <th>KPI Value</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentTask.kpis.map((kpi, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{kpi.kpiId.label}</td>
+                      <td>
+                        <input
+                          type="number"
+                          value={kpi.count}
+                          onChange={(e) =>
+                            handleKpiValueChange(kpi.kpiId.label, parseInt(e.target.value, 10))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <CButton color="primary" onClick={() => handleUpdateKpis(kpi.kpiId.label)} className="me-2">
+                          Update
+                        </CButton>
+                        <CButton color="danger" onClick={() => handleDeleteKpi(kpi.kpiId.label)}>
+                          Delete
+                        </CButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <CButton color="primary" onClick={handleUpdateKpis} className="mt-3">
+                Update all KPIs
               </CButton>
             </CCardBody>
           </CCard>
 
-          <CCard className="mt-3 mb-3">
+          <CCard className="mt-3 mb-3" style={getSectionStyle(deliverablesStatus)}>
             <CCardHeader className="bg-info text-light">Documents</CCardHeader>
             <CCardBody>
               <CForm onSubmit={handleAddDeliverable} className="d-flex justify-content-between align-items-center mb-4">
@@ -463,7 +614,35 @@ useEffect(() => {
                     <th>Actions</th>
                   </CTableRow>
                 </CTableHead>
+
                 <CTableBody>
+                {currentTask.deliverables &&
+                  currentTask.deliverables.map((deliverable, index) => (
+                    <CTableRow key={index}>
+                      <td>{deliverable.fileName}</td>
+                      <td>
+                        <CButton
+                          onClick={() => handleDownload(deliverable.fileUrl)}
+                          color="link"
+                          className="d-inline-flex align-items-center"
+                        >
+                          Download
+                        </CButton>
+                        <CButton color="warning" className="ms-2">
+                          <FcFullTrash
+                            style={{ fontSize: '16px' }}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent triggering the download
+                handleDeleteDeliverable(deliverable._id, deliverable.fileUrl, currentTask._id); // Pass the deliverable ID, file URL, and task ID
+              }}
+                          />
+                        </CButton>
+                      </td>
+                    </CTableRow>
+                  ))}
+              </CTableBody>
+
+               {/*  <CTableBody>
                   {currentTask.deliverables.map((deliverable, index) => (
                     <CTableRow key={index}>
                       <td>{deliverable.fileName}</td>
@@ -476,19 +655,19 @@ useEffect(() => {
                             style={{ fontSize: '16px' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteDeliverable(deliverable.id, deliverable.fileUrl);
+                              handleDeleteDeliverable(deliverable._id, deliverable.fileUrl);
                             }}
                           />
                         </CButton>
                       </td>
                     </CTableRow>
                   ))}
-                </CTableBody>
+                </CTableBody> */}
               </CTable>
             </CCardBody>
           </CCard>
-
-          {/* <CCard className="mt-3 mb-3">
+          
+          <CCard className="mt-3 mb-3" style={getSectionStyle(reportsStatus)}>
             <CCardHeader className="bg-info text-light">Reporting Section</CCardHeader>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
               {currentTask.reports.map((report, index) => (
@@ -504,8 +683,8 @@ useEffect(() => {
                   <div className="card-body">
                     <div className="d-flex align-items-center">
                       <div>
-                        <p className="mb-0 text-secondary">{report.label}</p>
-                        <p className="mb-0 font-13">{report.count}</p>
+                        <p className="mb-0 text-secondary">{report.title}</p>
+                        <p className="mb-0 font-13">{report.content}</p>
                       </div>
                       <div className="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto">
                         <i className="fa fa-bar-chart"></i>
@@ -532,7 +711,7 @@ useEffect(() => {
                 Add Reporting Section
               </CButton>
             </CCardBody>
-          </CCard> */}
+          </CCard>
         </CCardBody>
       </CCard>
     </>

@@ -18,7 +18,7 @@ export default function TaskRoutes({ activity }) {
       <Route path={`/`} element={<Activity activity={activity} tasks={tasks} />} />
       {tasks.map((task) => (
         <Route key={task._id} path={`${task._id}/*`} element={<Task task={task} />} />
-      ))}
+      ))} 
     </Routes>
   )
 }

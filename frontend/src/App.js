@@ -14,6 +14,13 @@ import { loadUserData } from './app/features/userData/userData'
 // import ProtectedRoute from './ProtectedRoute'
 import Task from './components/ProgramMonitoring/Task'
 import ResetUserPassword from './views/pages/register/ResetUserPassword'
+
+import CategoryMain from './views/category/categoryMain'
+
+import CategoryFormPage from './views/category/CategoryFormPage'
+
+
+
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
@@ -91,6 +98,8 @@ const App = () => {
   <Route path="/Dash/*" element={isLogged ? <DefaultLayout /> : <Navigate to="/" />} />
   <Route path="/reset-password/:token" element={<ResetUserPassword/>} />
   <Route path="/Dash/Monitoring/:programId/:activityId/:taskId" element={<Task />} />
+  <Route path="/dash/categories" element={<CategoryMain />} />
+  <Route path="/dash/categories/form/:categoryId" element={<CategoryFormPage />} />
   </Routes>
 
     </Suspense>

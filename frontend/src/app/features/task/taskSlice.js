@@ -50,6 +50,20 @@ export const loadTasks = createAsyncThunk('/loadTasks', async (_, { rejectWithVa
   }
 })
 
+export const updateAllTasksStatus = createAsyncThunk(
+  'task/updateAllTasksStatus',
+  async (_, { rejectWithValue }) => {
+    try {
+      console.log('Updating statuses for all tasks');
+      const response = await axios.put('http://localhost:5000/updateAllTasksStatus');
+      console.log('Update response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating all tasks:', error);
+      return rejectWithValue(error.response?.data || 'An error occurred');
+    }
+  }
+);
 export const loadTasksByActivityId = createAsyncThunk(
   '/loadTasksByActivityId',
   async (activityId, { rejectWithValue }) => {

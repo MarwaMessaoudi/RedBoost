@@ -12,6 +12,7 @@ import taskReducer from './features/task/taskSlice'
 import routeReducer from './features/routeSlice/routeSlice'
 import authReducer from './features/auth/authSlice'
 import sessionReducer from "./features/sessions/sessions"
+import categoryReducer from "./features/Category/CategorySlice"
 // Configure the Redux store
 const store = configureStore({
   reducer: {
@@ -28,6 +29,8 @@ const store = configureStore({
     route: routeReducer,
     auth: authReducer,
     sessionsSlice : sessionReducer,
+    categories: categoryReducer,
+
   },
 })
 

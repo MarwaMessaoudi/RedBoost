@@ -1,90 +1,146 @@
 import React, { useState } from 'react';
-import { CCard, CCardBody, CCardHeader, CFormCheck, CFormInput, CCol, CRow, CButton } from '@coreui/react';
-import axios from 'axios'; // Import axios for making HTTP requests
+import { CCard, CCardBody, CCardHeader, CFormInput, CCol, CRow, CButton, CFormSelect, CFormSwitch, CFormCheck } from '@coreui/react';
+import axios from 'axios';
 
 const AddCategoryPage = () => {
+  // State for the form data
   const [formData, setFormData] = useState({
     categoryTitle: '',
     selectedIcon: '',
-    field1: '',
-    field2: '',
-    field3: '',
-    field4: ''
+    formFields: [], // Array to store dynamic form fields
   });
 
-  // Handle form input changes
+  // State for adding a new form field
+  const [newField, setNewField] = useState({
+    fieldTitle: '',
+    fieldType: 'text', // Default field type
+    placeholder: '',
+    required: false,
+    options: '', // Comma-separated options for select fields
+    min: null, // For number fields
+    max: null, // For number fields
+  });
+
+  // List of icons for selection
+  const professions = [
+    { id: 'doctor', name: 'Doctor', icon: '👨‍⚕️' },
+    { id: 'nurse', name: 'Nurse', icon: '👩‍⚕️' },
+    { id: 'dentist', name: 'Dentist', icon: '🦷' },
+    { id: 'pharmacist', name: 'Pharmacist', icon: '💊' },
+    { id: 'therapist', name: 'Therapist', icon: '🧠' },
+    { id: 'surgeon', name: 'Surgeon', icon: '🩺' },
+    { id: 'teacher', name: 'Teacher', icon: '👩‍🏫' },
+    { id: 'professor', name: 'Professor', icon: '🎓' },
+    { id: 'tutor', name: 'Tutor', icon: '📚' },
+    { id: 'librarian', name: 'Librarian', icon: '📖' },
+    { id: 'researcher', name: 'Researcher', icon: '🔬' },
+    { id: 'engineer', name: 'Engineer', icon: '👷‍♂️' },
+    { id: 'developer', name: 'Developer', icon: '💻' },
+    { id: 'data-scientist', name: 'Data Scientist', icon: '📊' },
+    { id: 'designer', name: 'Designer', icon: '🎨' },
+    { id: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
+  ];
+
+  // Handle changes in the main form fields
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    if (name === 'selectedIcon') {
+      // Find the selected profession object
+      const selectedProfession = professions.find((prof) => prof.id === value);
+      // Store the emoji in the formData
+      setFormData({
+        ...formData,
+        selectedIcon: selectedProfession ? selectedProfession.icon : '',
+      });
+    } else {
+      // Handle other fields
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+  };
+
+  // Handle changes in the new form field inputs
+  const handleNewFieldChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setNewField({
+      ...newField,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+  };
+
+  // Add a new form field to the formFields array
+  const addFormField = () => {
+    const fieldToAdd = {
+      ...newField,
+      options: newField.fieldType === 'select' ? newField.options.split(',') : [], // Split options into an array
+    };
+    setFormData({
+      ...formData,
+      formFields: [...formData.formFields, fieldToAdd],
+    });
+    setNewField({
+      fieldTitle: '',
+      fieldType: 'text',
+      placeholder: '',
+      required: false,
+      options: '',
+      min: null,
+      max: null,
+    });
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      // Send form data to the backend
-      const response = await axios.post(process.env.BACKEND, formData);
-      console.log(response.data); // Log response from backend
-      // Reset form data after successful submission
+      const response = await axios.post('http://localhost:5000/categories/', formData);
+      console.log('Category created:', response.data);
+      alert('Category created successfully!');
+      // Reset the form after submission
       setFormData({
         categoryTitle: '',
         selectedIcon: '',
-        field1: '',
-        field2: '',
-        field3: '',
-        field4: ''
+        formFields: [],
       });
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert('Error creating category. Please try again.');
     }
   };
-
-  // Array of icon names for the radio buttons
-  const icons = [
-    'icon1', 'icon2', 'icon3', 'icon4', 'icon5', 'icon6',
-    'icon7', 'icon8', 'icon9', 'icon10', 'icon11', 'icon12'
-  ];
 
   return (
     <div>
       <CRow className="mb-4">
-        {/* Category Information Card */}
         <CCol md={6}>
           <CCard className="h-100">
             <CCardHeader>Category Information</CCardHeader>
             <CCardBody>
-              {/* Category Title */}
               <div className="mb-3">
                 <label htmlFor="categoryTitle" className="form-label">Category Title</label>
-                <CFormInput type="text" id="categoryTitle" name="categoryTitle" value={formData.categoryTitle} onChange={handleChange} />
+                <CFormInput
+                  type="text"
+                  id="categoryTitle"
+                  name="categoryTitle"
+                  value={formData.categoryTitle}
+                  onChange={handleChange}
+                />
               </div>
-
-              {/* Pick Category Icon */}
               <div className="mb-3">
                 <label className="form-label">Pick Category Icon</label>
-                {/* Form for category icon */}
                 <div className="d-flex flex-wrap">
-                  {icons.map((icon, index) => (
+                  {professions.map((profession) => (
                     <CFormCheck
-                      key={index}
+                      key={profession.id}
                       type="radio"
                       name="selectedIcon"
-                      id={`icon${index}`}
-                      label={
-                        <div className="p-2">
-                          <CCard
-                            className="icon-card"
-                            style={{ width: '50px', height: '50px' }} // Adjust size as needed
-                          >
-                            <img
-                              src={`path/to/${icon}.png`} // Replace path/to/ with the actual path
-                              alt={`Icon ${index + 1}`}
-                              style={{ width: '100%', height: '100%', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} // Adjust border radius and shadow
-                            />
-                          </CCard>
-                        </div>
-                      }
-                      value={icon}
+                      id={profession.id}
+                      label={<div className="p-2"><div style={{ fontSize: '24px' }}>{profession.icon}</div></div>}
+                      value={profession.id}
+                      checked={formData.selectedIcon === profession.icon}
                       onChange={handleChange}
                     />
                   ))}
@@ -93,39 +149,109 @@ const AddCategoryPage = () => {
             </CCardBody>
           </CCard>
         </CCol>
-
-        {/* Category Special Information Card */}
         <CCol md={6}>
           <CCard className="h-100">
-            <CCardHeader>Category Special Information</CCardHeader>
+            <CCardHeader>Custom Form Fields</CCardHeader>
             <CCardBody>
-              {/* Random Input Fields */}
+              {/* Form to add new fields */}
               <div className="mb-3">
-                <label htmlFor="field1" className="form-label">Field 1</label>
-                <CFormInput type="text" id="field1" name="field1" value={formData.field1} onChange={handleChange} />
+                <label htmlFor="fieldTitle" className="form-label">Field Title</label>
+                <CFormInput
+                  type="text"
+                  id="fieldTitle"
+                  name="fieldTitle"
+                  value={newField.fieldTitle}
+                  onChange={handleNewFieldChange}
+                />
               </div>
               <div className="mb-3">
-                <label htmlFor="field2" className="form-label">Field 2</label>
-                <CFormInput type="text" id="field2" name="field2" value={formData.field2} onChange={handleChange} />
+                <label htmlFor="fieldType" className="form-label">Field Type</label>
+                <CFormSelect
+                  id="fieldType"
+                  name="fieldType"
+                  value={newField.fieldType}
+                  onChange={handleNewFieldChange}
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="date">Date</option>
+                  <option value="select">Select</option>
+                  <option value="checkbox">Checkbox</option>
+                </CFormSelect>
               </div>
-              <div className="mb-3">
-                <label htmlFor="field3" className="form-label">Field 3</label>
-                <CFormInput type="text" id="field3" name="field3" value={formData.field3} onChange={handleChange} />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="field4" className="form-label">Field 4</label>
-                <CFormInput type="text" id="field4" name="field4" value={formData.field4} onChange={handleChange} />
+              {newField.fieldType === 'select' && (
+                <div className="mb-3">
+                  <label htmlFor="options" className="form-label">Options (comma-separated)</label>
+                  <CFormInput
+                    type="text"
+                    id="options"
+                    name="options"
+                    value={newField.options}
+                    onChange={handleNewFieldChange}
+                  />
                 </div>
+              )}
+              <div className="mb-3">
+                <label htmlFor="placeholder" className="form-label">Placeholder</label>
+                <CFormInput
+                  type="text"
+                  id="placeholder"
+                  name="placeholder"
+                  value={newField.placeholder}
+                  onChange={handleNewFieldChange}
+                />
+              </div>
+              <div className="mb-3">
+                <CFormSwitch
+                  id="required"
+                  name="required"
+                  label="Required"
+                  checked={newField.required}
+                  onChange={handleNewFieldChange}
+                />
+              </div>
+              <CButton color="primary" onClick={addFormField}>Add Field</CButton>
             </CCardBody>
-            </CCard>
+          </CCard>
         </CCol>
-    </CRow>
-                    {/* Submit Button */}
-  <div className="d-flex justify-content-end">
-    <CButton color="primary" onClick={handleSubmit}>Add Category</CButton>
-  </div>
-</div>
+      </CRow>
+
+      {/* Preview Section */}
+      <CCard className="mb-4">
+        <CCardHeader>Form Preview</CCardHeader>
+        <CCardBody>
+          {formData.formFields.map((field, index) => (
+            <div key={index} className="mb-3">
+              <label className="form-label">{field.fieldTitle}</label>
+              {field.fieldType === 'text' && (
+                <CFormInput type="text" placeholder={field.placeholder} />
+              )}
+              {field.fieldType === 'number' && (
+                <CFormInput type="number" placeholder={field.placeholder} min={field.min} max={field.max} />
+              )}
+              {field.fieldType === 'date' && (
+                <CFormInput type="date" />
+              )}
+              {field.fieldType === 'select' && (
+                <CFormSelect>
+                  {field.options.map((option, i) => (
+                    <option key={i} value={option}>{option}</option>
+                  ))}
+                </CFormSelect>
+              )}
+              {field.fieldType === 'checkbox' && (
+                <CFormCheck type="checkbox" label={field.fieldTitle} />
+              )}
+            </div>
+          ))}
+        </CCardBody>
+      </CCard>
+
+      <div className="text-end">
+        <CButton color="primary" onClick={handleSubmit}>Submit</CButton>
+      </div>
+    </div>
   );
-}
+};
 
 export default AddCategoryPage;

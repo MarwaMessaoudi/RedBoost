@@ -2,6 +2,8 @@ import path from 'path';
 import { element } from 'prop-types'
 import React from 'react'
 
+
+
 const EntrepreneursTable = React.lazy(() => import('./views/entrepeneur/entrepeneursTable'));
 const EntrepreneurDetails = React.lazy(() => import('./views/entrepeneur/entrepeneurDetails'));
 const CategoryMain = React.lazy(() => import('./views/category/categoryMain'));
@@ -11,8 +13,9 @@ const MarketingDashboard = React.lazy(() => import('./views/marketing/marketingD
 const EmailForm = React.lazy(() => import('./views/marketing/emailForm'));
 const ThemesScreen = React.lazy(() => import('./views/marketing/themes/themesScreen'));
 const newspaperComposer =React.lazy(()=> import('./views/marketing/newspaper/newspaperComposer'))
-const TaskDetails = React.lazy(()=>import('./components/ProgramMonitoring/TaskDetails'))
+//const TaskDetails = React.lazy(()=>import('./components/ProgramMonitoring/TaskDetails'))
 const UserDetails = React.lazy(()=>import('./views/dashboard/UserDetails'))
+const Task =React.lazy(() => import('./components/ProgramMonitoring/Task'))
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Events = React.lazy(() => import('./components/Events/Events'))
@@ -22,7 +25,7 @@ const EntrepConacts = React.lazy(() => import('./components/contacts/EntrepConac
 const ProgramCards = React.lazy(() => import('./components/ProgramMonitoring/ProgramCards'))
 const MainDatabaseManager = React.lazy(() => import('./views/dataBaseManager/MainDatabaseManager'))
 const CreateContact = React.lazy(() => import('./views/contacts/CreateContact'))
-
+const CategoryFormPage = React.lazy(() => import('./views/category/CategoryFormPage'))
 const Users = React.lazy(() => import('./views/users/users'))
 const TaskValidation = React.lazy(() => import('./views/TaskValidation/TaskValidation'))
 const MobilisationStatistics = React.lazy(() => import('./views/Statistics/MobilisationStatistics'))
@@ -45,6 +48,7 @@ const routes = [
   { path: '/dashboard', exact: true, name: 'Dashboard', element: Dashboard },
   { path: '/user', name: 'User', element: User },
   { path: '/Database', name: 'Database Manager', element: MainDatabaseManager },
+  { path: '/category/form/:categoryId', exact: true, name: 'Category Form', element: CategoryFormPage },
   {
     path: '/Monitoring',
     name: 'Program Monitoring',
@@ -62,6 +66,8 @@ const routes = [
     name : 'MobilisationStatistics',
     element : MobilisationStatistics
   },
+  { path: '/:taskId', name: 'Task', element: Task},
+
   {
     path : '/statistics/avancement',
     name : 'Avancement',
@@ -108,7 +114,7 @@ const routes = [
   {path:'/NewspaperComposer', name:'AI generated composer', element: newspaperComposer},
 
   { path: '/users/:id', name: 'UserDetails', element: UserDetails },
-  { path: '/:taskId', name: 'TaskDetails', element: TaskDetails},
+  //{ path: '/:taskId', name: 'TaskDetails', element: TaskDetails},
   {path:'/Reporting', name:'Reporting', element: reportingScreen},
   {path:'/fileupload', name:'test upload', element: FileUpload},
 

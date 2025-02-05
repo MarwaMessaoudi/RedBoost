@@ -11,7 +11,7 @@ import {
 } from '@coreui/react';
 import { useSelector } from 'react-redux';
 
-function AddTask({ taskType, onAddTask, onCancel,activityId }) {
+function AddTask({ taskType, onAddTask, onCancel, activityId }) {
   const [taskName, setTaskName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -23,7 +23,6 @@ function AddTask({ taskType, onAddTask, onCancel,activityId }) {
       alert('All fields are required');
       return;
     }
-    console.log('Task Owner:', userId); // Debugging line
 
     // Determine the task state based on dates
     const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
@@ -36,19 +35,19 @@ function AddTask({ taskType, onAddTask, onCancel,activityId }) {
     }
 
     // Add the task with its determined state
-    onAddTask({ 
-      taskName ,
-      startDate, 
+    onAddTask({
+      taskName,
+      startDate,
       endDate,
-      userId ,
+      userId,
       typeId: taskType._id,
       activityId, // Include activityId here
+      status: taskState, // Add the determined status
     });
   };
 
   const handleOwnerChange = (e) => {
     const selectedUsername = e.target.value;
-    setTaskOwner(selectedUsername);
     if (!users || users.length === 0) {
       console.log('No users available');
       return;
@@ -58,7 +57,6 @@ function AddTask({ taskType, onAddTask, onCancel,activityId }) {
     const selectedUser = users.find((user) => user.username === selectedUsername);
 
     if (selectedUser) {
-      console.log('Selected User ID:', selectedUser._id); // Use _id instead of id
       setTaskOwner(selectedUser._id); // Store the user ID instead of username
     } else {
       console.log('User not found');
@@ -76,6 +74,7 @@ function AddTask({ taskType, onAddTask, onCancel,activityId }) {
           className="mb-3"
           value={taskName}
           onChange={(e) => setTaskName(e.target.value)}
+          required
         />
         <CFormInput
           label="Start Date:"
@@ -83,6 +82,7 @@ function AddTask({ taskType, onAddTask, onCancel,activityId }) {
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
+          required
         />
         <CFormInput
           label="End Date:"
@@ -90,16 +90,18 @@ function AddTask({ taskType, onAddTask, onCancel,activityId }) {
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
+          required
         />
         <CFormSelect
           label="Assign Task Owner:"
-          value={userId}
+          value={users.find((user) => user._id === userId)?.username || ''}
           onChange={handleOwnerChange}
+          required
         >
           <option value="">Select a User</option>
           {users.map((user) => (
             <option key={user._id} value={user.username}>
-              {user.username} (ID: {user._id})
+              {user.username}
             </option>
           ))}
         </CFormSelect>

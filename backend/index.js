@@ -53,6 +53,7 @@ const sessionsRoute = require("./routes/api/Sessions");
 const taskRoutes = require("./routes/api/taskController"); // Import the task controller
 const handleKpi = require("./routes/api/handleKpi");
 const emailRouter = require("./routes/api/emailRouter");
+const categoryRoute = require("./routes/api/Category/categoryRoutes");
 
 require("./passport/index");
 
@@ -71,6 +72,7 @@ app.use(express.json());
 //app.use("/kpis", handleKpi);
 app.use('/', taskRoutes); // Use the task controller as middleware
 app.use('/', handleKpi);
+app.use('/', categoryRoute)
 const store = new MongoDBSession({
   uri: db,
   collection: "sessions",
@@ -190,6 +192,10 @@ app.get("/sessions", sessionsRoute);
 app.delete("/deleteEntrepreneur/:id",hundleEntrepreneur)
 app.put("/updateEntrepreneur/:id",hundleEntrepreneur)
 app.get("/filterEntrepreneurs",hundleEntrepreneur);
+
+app.delete("/deleteDeliverable/:taskId/deliverables/:deliverableId", taskRoutes); // Delete deliverable
+// New route
+app.post("/categories")
 
 // The "catchall" handler: for any request that doesn't match one above, send back index.html
 app.get("*", (req, res) => {

@@ -21,6 +21,120 @@ function calculateTaskStatus(startDate, endDate) {
   return "expired"; // Default status if none of the conditions match
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//this fct works!!!!!!!!!!!!!!!
+
+router.put("/updateTask/:taskId", async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const taskData = req.body;
+
+    // Fetch the current task from the database
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Determine the new status
+    let newStatus = task.status; // Default to the existing status
+
+    if (taskData.status === "completed") {
+      // If the user explicitly marks the task as completed
+      newStatus = "completed";
+    } else if (!taskData.status) {
+      // Dynamically calculate status based on the date only if no status is provided
+      const currentDate = new Date();
+      if (currentDate < new Date(task.startDate)) {
+        newStatus = "notStarted";
+      } else if (currentDate >= new Date(task.startDate) && currentDate <= new Date(task.endDate)) {
+        newStatus = "inProgress";
+      }
+    } else {
+      // Use the provided status if it's not "completed"
+      newStatus = taskData.status;
+    }
+
+    // Update the task data with the new status and other fields from the request body
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { ...taskData, status: newStatus }, // Merge the request body with the updated status
+      { new: true } // Return the updated document
+    );
+
+    res.status(200).json(updatedTask);
+  } catch (error) {
+    console.error("Error updating task:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+router.put("/updateAllTasksStatus", async (req, res) => {
+  try {
+    // Fetch all tasks from the database
+    const tasks = await Task.find({});
+
+    // Get the current date
+    const currentDate = new Date();
+
+    // Loop through all tasks and update their statuses
+    for (const task of tasks) {
+      let newStatus = task.status;
+
+      // Determine the new status based on the current date and task dates
+      if (currentDate < new Date(task.startDate)) {
+        newStatus = "notStarted";
+      } else if (
+        currentDate >= new Date(task.startDate) &&
+        currentDate <= new Date(task.endDate)
+      ) {
+        newStatus = "inProgress";
+      } else if (currentDate > new Date(task.endDate)) {
+        newStatus = "completed";
+      }
+
+      // Update the task status in the database
+      await Task.findByIdAndUpdate(
+        task._id,
+        { status: newStatus }, // Update only the status
+        { new: true } // Return the updated document
+      );
+    }
+
+    // Send a success response
+    res.status(200).json({ message: "All tasks statuses updated successfully" });
+  } catch (error) {
+    console.error("Error updating tasks:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+
+
+
 // Create and add a new task to an activity
 router.post('/addtask', async (req, res) => {
   const { activityId, taskName, startDate, endDate, userId, xpPoints, typeId } = req.body;
@@ -165,64 +279,6 @@ router.get('/tasktypes', async (req, res) => {
   }
 });
 
-//adding KPis 
-
-router.put('/:taskId/kpis', async (req, res) => {
-  const { taskId } = req.params;
-  const { kpis } = req.body; // Array of KPI objects: [{ kpiId: '...', count: 5 }, ...]
-
-  try {
-    // Find the task to ensure it exists
-    const task = await Task.findById(taskId);
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
-
-    // Validate the KPIs
-    if (!Array.isArray(kpis)) {
-      return res.status(400).json({ message: 'KPIs must be provided as an array' });
-    }
-
-    // Validate and update KPIs in both the task and the Kpi collection
-    for (const kpiUpdate of kpis) {
-      const { kpiId, count } = kpiUpdate;
-
-      // Validate KPI ID and check if it exists in the task's KPI list
-      const kpiIndex = task.kpis.findIndex(kpi => kpi.kpiId.toString() === kpiId);
-      if (
-        !mongoose.Types.ObjectId.isValid(kpiId) ||
-        typeof count !== 'number' ||
-        kpiIndex === -1
-      ) {
-        return res.status(400).json({
-          message: `Invalid or non-existent KPI ID: ${kpiId}`,
-        });
-      }
-
-      // Update the task's KPI count
-      task.kpis[kpiIndex].count += count;
-
-      // Update the global KPI count in the Kpi collection
-      await Kpi.findByIdAndUpdate(
-        kpiId,
-        { $inc: { count } }, // Increment the count
-        { new: true }
-      );
-    }
-
-    // Save the updated task
-    const updatedTask = await task.save();
-
-    return res.status(200).json({
-      message: 'KPIs updated successfully',
-      task: updatedTask,
-    });
-  } catch (error) {
-    console.error("Error in /:taskId/kpis route:", error); // Log the full error
-    return res.status(500).json({ message: 'Server error', error });
-  }
-});
-
 
 
 
@@ -271,6 +327,96 @@ router.put('/:taskId/deliverables', async (req, res) => {
     return res.status(500).json({ message: 'Server error', error });
   }
 });
+
+//delete deliverables 
+
+
+
+
+/////////////////////////////////////
+router.delete('/deleteDeliverable/:taskId/deliverables/:deliverableId', async (req, res) => {
+  try {
+    const { taskId, deliverableId } = req.params;
+
+    // Log the incoming parameters for debugging
+    console.log(`Received request to delete deliverable: taskId=${taskId}, deliverableId=${deliverableId}`);
+
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      return res.status(400).json({ message: 'Invalid task ID format' });
+    }
+
+    // Find the task by ID
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Ensure deliverables exist
+    if (!task.deliverables || !Array.isArray(task.deliverables)) {
+      return res.status(400).json({ message: 'No deliverables to delete' });
+    }
+
+    // Filter out the deliverable with the matching ID
+    const initialLength = task.deliverables.length;
+    task.deliverables = task.deliverables.filter(deliverable => deliverable._id.toString() !== deliverableId);
+
+    if (task.deliverables.length === initialLength) {
+      return res.status(404).json({ message: 'Deliverable not found' });
+    }
+
+    // Save the updated task
+    await task.save();
+
+    res.status(200).json({ message: 'Deliverable deleted successfully', task });
+  } catch (error) {
+    // Log the error for debugging
+    console.error('Error deleting deliverable:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message }); // Include error message in response
+  }
+});
+
+////////////////////////
+
+
+
+
+
+
+
+//add reports to a task
+router.put("/:taskId/reports", async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { reports } = req.body;
+
+    // Validate input
+    if (!Array.isArray(reports) || reports.length === 0) {
+      return res.status(400).json({ error: "Reports must be a non-empty array" });
+    }
+
+    // Check if the task exists
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Append new reports to the existing reports array
+    task.reports.push(...reports);
+
+    // Save the updated task
+    await task.save();
+
+    res.status(200).json({ message: "Reports added successfully", task });
+  } catch (error) {
+    console.error("Error updating task reports:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+
 
 // Get all tasks for a specific activity
 router.get('/loadTasksByActivityId/:activityId', async (req, res) => {
@@ -364,7 +510,7 @@ router.get('/taskbyid/:taskId', async (req, res) => {
 
 
 // Delete a task from an activity
-router.delete('/:taskId', async (req, res) => {
+router.delete('/deleteTask/:taskId', async (req, res) => {
   const { taskId } = req.params;
 
   try {
@@ -464,5 +610,74 @@ router.put('/:taskId/kpis/reset', async (req, res) => {
     console.error('Error resetting KPI count:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
-});/*************************** */
+
+
+});
+
+
+//adding KPis 
+
+router.put('/:taskId/kpis', async (req, res) => {
+  const { taskId } = req.params;
+  const { kpis } = req.body; // Array of KPI objects: [{ kpiId: '...', count: 5 }, ...]
+
+  try {
+    // Find the task to ensure it exists
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Validate the KPIs
+    if (!Array.isArray(kpis)) {
+      return res.status(400).json({ message: 'KPIs must be provided as an array' });
+    }
+
+    // Update or add new KPIs to the task
+for (const kpiUpdate of kpis) {
+  const { kpiId, count } = kpiUpdate;
+
+
+  if (!mongoose.Types.ObjectId.isValid(kpiId) || typeof count !== 'number') {
+    return res.status(400).json({ message: `Invalid or non-existent KPI ID: ${kpiId}` });
+  }
+  // Validate KPI ID and check if it exists in the task's KPI list
+  const kpiIndex = task.kpis.findIndex(kpi => kpi.kpiId.toString() === kpiId);
+  let previousCount = 0;
+  if (kpiIndex !== -1) {
+    previousCount = task.kpis[kpiIndex].count; // Get previous count
+    task.kpis[kpiIndex].count = count; // Replace old value with new one
+  } else {
+    task.kpis.push({ kpiId, count });
+  }
+
+  // Update the global KPI count
+  await Kpi.findByIdAndUpdate(
+    kpiId,
+    { $inc: { count: count - previousCount } }, // Adjust by removing old value and adding new one
+    { new: true }
+  );
+}
+
+const updatedTask = await task.save();
+const populatedTask = await Task.findById(updatedTask._id).populate('kpis.kpiId');
+
+return res.status(200).json({
+  message: 'KPIs updated successfully',
+  task: populatedTask,
+
+});
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error });
+  }
+});
+
+
+
+
+
+
+
+
+/*************************** */
 module.exports = router;

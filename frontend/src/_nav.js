@@ -20,7 +20,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Dashboard',
-    to: '/',
+    to: '/Dash',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
   {
@@ -36,7 +36,7 @@ const _nav = [
       {
         component: CNavItem,
         name: 'Add new Contact',
-        to: 'category',
+        to: '/Dash/category',
       },
 
       {
